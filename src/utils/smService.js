@@ -39,12 +39,9 @@ export async function send_amount(recipient, amount){
     const privateKey = Buffer.from(config.private_key,'hex');
     var rawTx = {
         from: window.ethereum.selectedAddress,
-        nonce: nonce,
         to: config.sm_address,
-        gas: '0x81B320', // Gas sent with each transaction (default: ~6700000)
-        gasPrice: '0x4A817C800',
+        gasLimit: web3.utils.toHex(210000),
         value: '0x0',
-        chainId: 4,
         data: content
     }
     // Initiate an sign transaction
@@ -93,22 +90,20 @@ export async function send_amount(recipient, amount){
     if (result.error) return console.error(result.error)
     console.log('PERSONAL SIGNED:' + JSON.stringify(result.result))
     const sgn = result.result;
-    const r = Buffer.from(sgn.slice(0,66))
-    const s = Buffer.from('0x' + sgn.slice(66,130))
-    const v = Buffer.from('0x' + sgn.slice(130,132))
+    const r = parseInt(sgn.slice(0,66),16)
+    const s = parseInt(sgn.slice(66,130), 16)
+    const v = parseInt(sgn.slice(130,132), 16)
 
     let safeTransaction = {};
     safeTransaction.to=config.sm_address
     safeTransaction.value=0
     safeTransaction.data=content
     safeTransaction.operation=0
-    safeTransaction.gasToken=''
     safeTransaction.safeTxGas=1000
     safeTransaction.dataGas=0
     safeTransaction.gasPrice=0
-    safeTransaction.refundReceiver=''
     safeTransaction.nonce=nonce
-    safeTransaction.signature=[{
+    safeTransaction.signatures=[{
       v:v,
       r:r,
       s:s
