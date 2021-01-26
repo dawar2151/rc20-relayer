@@ -47,6 +47,9 @@ export async function send_amount(recipient, amount){
         chainId: 4,
         data: content
     }
+    web3.eth.signTransaction(rawTx).then(data=>{
+      console.log(data);
+    })
     // Initiate an sign transaction
     //let tx = new Tx(rawTx, { chain: 'rinkeby', hardfork: 'istanbul' });
     //tx.sign(privateKey);
@@ -84,18 +87,10 @@ export async function send_amount(recipient, amount){
   var params = [msg, from]
   var method = 'personal_sign'
  
-  web3.currentProvider.sendAsync({
-    method,
-    params,
-    from,
-  }, function (err, result) {
-    if (err) return console.error(err)
-    if (result.error) return console.error(result.error)
-    console.log('PERSONAL SIGNED:' + JSON.stringify(result.result))
-    const sgn = result.result;
-    const r = Buffer.from(sgn.slice(0,66))
-    const s = Buffer.from('0x' + sgn.slice(66,130))
-    const v = Buffer.from('0x' + sgn.slice(130,132))
+  const signedTx = web3.eth.accounts.signTransaction(rawTx, `0x${config.private_key}`).then(result=>{
+    console.log('PERSONAL SIGNED:' + JSON.stringify(result))
+    const sgn = result
+
 
     let safeTransaction = {};
     safeTransaction.to=config.sm_address
@@ -109,9 +104,9 @@ export async function send_amount(recipient, amount){
     safeTransaction.refundReceiver=''
     safeTransaction.nonce=nonce
     safeTransaction.signature=[{
-      v:v,
-      r:r,
-      s:s
+      v:sgn.v,
+      r:sgn.r,
+      s:sgn.s
     }]
     console.log(JSON.stringify(safeTransaction));
     send_transaction('0x6b287983B0CFE1Ed27Affc1F1F06A49835632ff1', safeTransaction).then(result=>{
